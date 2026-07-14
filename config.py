@@ -80,8 +80,14 @@ class GmailConfig:
     # When False (e.g. on a headless server), never open a browser for OAuth;
     # rely on a pre-supplied token.json that auto-refreshes instead.
     allow_interactive_auth: bool
+    # gmail.modify → read threads/labels & detect replies.
+    # gmail.send   → send follow-ups over HTTPS via the Gmail API (needed where
+    #                outbound SMTP is blocked, e.g. Railway and most PaaS hosts).
     scopes: List[str] = field(
-        default_factory=lambda: ["https://www.googleapis.com/auth/gmail.modify"]
+        default_factory=lambda: [
+            "https://www.googleapis.com/auth/gmail.modify",
+            "https://www.googleapis.com/auth/gmail.send",
+        ]
     )
 
     @property
@@ -143,6 +149,9 @@ class Config:
     # Only mark the session cookie "Secure" (HTTPS-only) when actually serving
     # over HTTPS. Default False so local http://localhost logins work.
     session_cookie_secure: bool
+    # How outbound follow-ups are sent: "smtp" (default, local) or "gmail_api"
+    # (HTTPS — required on hosts that block SMTP, e.g. Railway).
+    send_method: str
 
     smtp: SMTPConfig
     gmail: GmailConfig
@@ -254,6 +263,7 @@ def load_config() -> Config:
         dashboard_password_hash=_get_str("DASHBOARD_PASSWORD_HASH"),
         session_timeout_minutes=_get_int("SESSION_TIMEOUT_MINUTES", 60),
         session_cookie_secure=_get_bool("SESSION_COOKIE_SECURE", False),
+        send_method=_get_str("SEND_METHOD", "smtp").strip().lower() or "smtp",
         smtp=smtp,
         gmail=gmail,
         business_hours=business_hours,

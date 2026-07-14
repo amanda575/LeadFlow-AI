@@ -35,6 +35,9 @@ class OutgoingEmail:
     # Threading headers (the RFC Message-IDs, angle-bracketed).
     in_reply_to: Optional[str] = None
     references: Optional[str] = None
+    # Gmail thread id — used by the Gmail-API sender to keep the follow-up in the
+    # original conversation. Ignored by the SMTP sender (which threads via headers).
+    thread_id: Optional[str] = None
 
 
 @dataclass

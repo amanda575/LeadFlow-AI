@@ -96,11 +96,15 @@ class HealthMonitor:
             session.close()
 
     def _check_smtp(self) -> bool:
+        # "SMTP" on the dashboard means "can we send" — verify whichever sender
+        # (SMTP or Gmail API) is active.
         now = time.time()
         ts, value = self._smtp_cache
         if now - ts < self._cache_seconds:
             return value
-        value = smtp_client.verify_connection()
+        from sender import get_sender
+
+        value = get_sender().verify_connection()
         self._smtp_cache = (now, value)
         return value
 

@@ -38,7 +38,8 @@ from models import (
     Lead,
     LeadStatus,
 )
-from smtp_client import OutgoingEmail, smtp_client
+from smtp_client import OutgoingEmail
+from sender import get_sender
 from template_engine import RenderContext, engine
 from utils import (
     first_name,
@@ -348,7 +349,7 @@ class LeadService:
             stage_being_sent = step.step_number
 
         # --- network IO happens OUTSIDE the DB transaction ---------------- #
-        result = smtp_client.send(outgoing)
+        result = get_sender().send(outgoing)
 
         with session_scope() as session:
             lead = session.get(Lead, lead_id)
@@ -435,6 +436,7 @@ class LeadService:
             text_body=text,
             in_reply_to=lead.rfc_message_id,
             references=lead.references,
+            thread_id=lead.thread_id,
         )
 
     # ------------------------------------------------------------------ #
