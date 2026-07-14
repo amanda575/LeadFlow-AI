@@ -42,12 +42,15 @@ def _materialize_gmail_credentials() -> None:
     configured paths only when the files don't already exist, so a token that the
     app later refreshes on a persistent volume is never clobbered.
     """
-    for env_name, path in (
-        ("GMAIL_CREDENTIALS_JSON", config.gmail.credentials_file),
-        ("GMAIL_TOKEN_JSON", config.gmail.token_file),
+    # Credentials rarely change → write only if missing.
+    # The token can be rotated (e.g. adding scopes) → when supplied as an env var
+    # it is the source of truth and always overwrites the on-disk copy on boot.
+    for env_name, path, always in (
+        ("GMAIL_CREDENTIALS_JSON", config.gmail.credentials_file, False),
+        ("GMAIL_TOKEN_JSON", config.gmail.token_file, True),
     ):
         blob = os.getenv(env_name)
-        if blob and not path.exists():
+        if blob and (always or not path.exists()):
             try:
                 path.parent.mkdir(parents=True, exist_ok=True)
                 path.write_text(blob, encoding="utf-8")
