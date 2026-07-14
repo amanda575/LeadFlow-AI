@@ -77,7 +77,9 @@ class GmailConfig:
     token_file: Path
     label: str
     auto_remove_label: bool
-    # Read-only scope keeps the principle of least privilege; sending uses SMTP.
+    # When False (e.g. on a headless server), never open a browser for OAuth;
+    # rely on a pre-supplied token.json that auto-refreshes instead.
+    allow_interactive_auth: bool
     scopes: List[str] = field(
         default_factory=lambda: ["https://www.googleapis.com/auth/gmail.modify"]
     )
@@ -171,14 +173,23 @@ class Config:
 def load_config() -> Config:
     """Build the :class:`Config` object from the current environment."""
 
-    database_dir = BASE_DIR / "database"
-    logs_dir = BASE_DIR / "logs"
-    backups_dir = BASE_DIR / "backups"
+    # Stateful data lives under DATA_DIR when set (e.g. a mounted cloud volume),
+    # so leads/logs/backups/token survive redeploys. Code assets stay in BASE_DIR.
+    data_root = Path(_get_str("DATA_DIR")).expanduser() if _get_str("DATA_DIR") else BASE_DIR
+    database_dir = data_root / "database"
+    logs_dir = data_root / "logs"
+    backups_dir = data_root / "backups"
+    credentials_dir = data_root / "credentials"
     templates_dir = BASE_DIR / "templates"
     email_templates_dir = templates_dir / "email"
 
-    for directory in (database_dir, logs_dir, backups_dir, email_templates_dir):
+    for directory in (database_dir, logs_dir, backups_dir, credentials_dir,
+                      email_templates_dir):
         directory.mkdir(parents=True, exist_ok=True)
+
+    def _resolve_data_path(env_name: str, default: str) -> Path:
+        raw = Path(_get_str(env_name, default)).expanduser()
+        return raw if raw.is_absolute() else (data_root / raw)
 
     smtp = SMTPConfig(
         host=_get_str("SMTP_HOST", "smtp.gmail.com"),
@@ -194,11 +205,13 @@ def load_config() -> Config:
     )
 
     gmail = GmailConfig(
-        credentials_file=BASE_DIR
-        / _get_str("GMAIL_CREDENTIALS_FILE", "credentials/credentials.json"),
-        token_file=BASE_DIR / _get_str("GMAIL_TOKEN_FILE", "credentials/token.json"),
+        credentials_file=_resolve_data_path(
+            "GMAIL_CREDENTIALS_FILE", "credentials/credentials.json"
+        ),
+        token_file=_resolve_data_path("GMAIL_TOKEN_FILE", "credentials/token.json"),
         label=_get_str("GMAIL_LABEL", "Follow Up"),
         auto_remove_label=_get_bool("GMAIL_AUTO_REMOVE_LABEL", False),
+        allow_interactive_auth=_get_bool("GMAIL_ALLOW_INTERACTIVE_AUTH", True),
     )
 
     business_hours = BusinessHoursConfig(
@@ -231,8 +244,10 @@ def load_config() -> Config:
     return Config(
         base_dir=BASE_DIR,
         secret_key=_get_str("SECRET_KEY", "dev-insecure-secret-change-me"),
-        flask_host=_get_str("FLASK_HOST", "127.0.0.1"),
-        flask_port=_get_int("FLASK_PORT", 5000),
+        # Cloud platforms (Railway/Render/Heroku) inject PORT and expect the app
+        # to bind 0.0.0.0. Locally we default to loopback for safety.
+        flask_host=_get_str("FLASK_HOST", "0.0.0.0" if os.getenv("PORT") else "127.0.0.1"),
+        flask_port=_get_int("PORT", _get_int("FLASK_PORT", 5000)),
         flask_debug=_get_bool("FLASK_DEBUG", False),
         dashboard_username=_get_str("DASHBOARD_USERNAME", "admin"),
         dashboard_password=_get_str("DASHBOARD_PASSWORD", "changeme"),

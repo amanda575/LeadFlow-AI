@@ -33,10 +33,34 @@ from logging_manager import configure_logging, get_logger
 log = get_logger("dashboard")
 
 
+def _materialize_gmail_credentials() -> None:
+    """Write Google credentials/token from env vars if provided and missing.
+
+    Cloud platforms (Railway/Render) have no shell to drop files into, so the
+    Gmail ``credentials.json`` and ``token.json`` can be supplied as the env vars
+    ``GMAIL_CREDENTIALS_JSON`` / ``GMAIL_TOKEN_JSON``. They are written to the
+    configured paths only when the files don't already exist, so a token that the
+    app later refreshes on a persistent volume is never clobbered.
+    """
+    for env_name, path in (
+        ("GMAIL_CREDENTIALS_JSON", config.gmail.credentials_file),
+        ("GMAIL_TOKEN_JSON", config.gmail.token_file),
+    ):
+        blob = os.getenv(env_name)
+        if blob and not path.exists():
+            try:
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text(blob, encoding="utf-8")
+                log.info("Wrote %s from %s env var", path.name, env_name)
+            except OSError as exc:
+                log.error("Could not write %s: %s", path, exc)
+
+
 def _bootstrap(start_scheduler: bool = True):
     """Initialise subsystems and return (flask_app, scheduler_service)."""
     configure_logging(config.logs_dir)
     init_db(config)
+    _materialize_gmail_credentials()
     log.info("Database initialised at %s", config.database_path)
 
     # Import after init_db so module singletons see a ready database.

@@ -90,12 +90,19 @@ class GmailClient:
             if not creds or not creds.valid:
                 if creds and creds.expired and creds.refresh_token:
                     creds.refresh(Request())
-                elif self._cfg.credentials_file.exists():
+                elif self._cfg.credentials_file.exists() and self._cfg.allow_interactive_auth:
                     flow = InstalledAppFlow.from_client_secrets_file(
                         str(self._cfg.credentials_file), self._cfg.scopes
                     )
                     # run_local_server opens a browser the first time only.
                     creds = flow.run_local_server(port=0)
+                elif not self._cfg.allow_interactive_auth:
+                    log.warning(
+                        "Gmail not authorized and interactive auth is disabled "
+                        "(headless). Supply a valid token.json (via GMAIL_TOKEN_JSON "
+                        "or the mounted volume)."
+                    )
+                    return None
                 else:
                     log.warning(
                         "No Gmail credentials file at %s", self._cfg.credentials_file
