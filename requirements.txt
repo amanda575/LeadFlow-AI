@@ -1,0 +1,27 @@
+# LeadFlow AI - Python dependencies
+# Python 3.9+ compatible (3.12+ recommended)
+
+Flask==3.0.3
+Flask-WTF==1.2.1
+Werkzeug==3.0.3
+SQLAlchemy==2.0.31
+python-dotenv==1.0.1
+APScheduler==3.10.4
+Jinja2==3.1.4
+pytz==2024.1
+
+# Gmail API
+google-api-python-client==2.137.0
+google-auth==2.32.0
+google-auth-oauthlib==1.2.1
+google-auth-httplib2==0.2.0
+
+# Desktop notifications
+plyer==2.1.0
+
+# Data export / spreadsheets
+pandas==2.2.2
+openpyxl==3.1.5
+
+# Optional production server
+gunicorn==22.0.0

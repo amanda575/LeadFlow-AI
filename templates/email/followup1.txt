@@ -1,0 +1,10 @@
+Hi {{ name }},
+
+I wanted to gently follow up on my previous email regarding how
+{{ company or 'your business' }} could attract more qualified leads through SEO.
+
+Would you be open to a quick 15-minute chat this week?
+
+Best,
+Amanda
+SeoLeads.Me

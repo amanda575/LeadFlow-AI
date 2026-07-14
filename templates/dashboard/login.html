@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}Sign in{% endblock %}
+{% block fullpage %}
+<div class="login-wrap">
+  <div class="card login-card">
+    <div class="login-brand">
+      <i class="bi bi-lightning-charge-fill"></i>
+      <h1 class="h4 mt-2 mb-0">{{ app_name }}</h1>
+      <p class="text-secondary small">Email follow-up automation</p>
+    </div>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for category, message in messages %}
+        <div class="alert alert-{{ category }} py-2">{{ message }}</div>
+      {% endfor %}
+    {% endwith %}
+    <form method="post" action="{{ url_for('login') }}">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="mb-3">
+        <label class="form-label">Username</label>
+        <input type="text" name="username" class="form-control" autofocus required>
+      </div>
+      <div class="mb-3">
+        <label class="form-label">Password</label>
+        <input type="password" name="password" class="form-control" required>
+      </div>
+      <button class="btn btn-primary w-100" type="submit">
+        <i class="bi bi-box-arrow-in-right"></i> Sign in
+      </button>
+    </form>
+  </div>
+</div>
+{% endblock %}

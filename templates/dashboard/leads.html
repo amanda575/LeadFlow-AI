@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+{% block title %}Leads{% endblock %}
+{% block heading %}Leads{% endblock %}
+{% block content %}
+
+<form class="card card-body mb-3" method="get" action="{{ url_for('leads') }}">
+  <div class="row g-2 align-items-end">
+    <div class="col-md-5">
+      <label class="form-label small">Search</label>
+      <input type="text" name="q" value="{{ q }}" class="form-control"
+             placeholder="Email, name, company, subject, website, reply text…">
+    </div>
+    <div class="col-md-3">
+      <label class="form-label small">Status</label>
+      <select name="status" class="form-select">
+        <option value="">All</option>
+        {% for s in statuses %}
+        <option value="{{ s }}" {{ 'selected' if status == s else '' }}>{{ s|capitalize }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-2">
+      <label class="form-label small">Sort</label>
+      <select name="sort" class="form-select">
+        {% for key, label in [('updated_at','Updated'),('date_added','Added'),
+              ('next_followup_at','Next follow-up'),('name','Name'),
+              ('company','Company'),('status','Status')] %}
+        <option value="{{ key }}" {{ 'selected' if sort == key else '' }}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-2 d-flex gap-2">
+      <select name="dir" class="form-select">
+        <option value="desc" {{ 'selected' if dir == 'desc' else '' }}>↓</option>
+        <option value="asc" {{ 'selected' if dir == 'asc' else '' }}>↑</option>
+      </select>
+      <button class="btn btn-primary" type="submit"><i class="bi bi-search"></i></button>
+    </div>
+  </div>
+</form>
+
+<div class="card">
+  <div class="card-body p-0">
+    <table class="table table-hover mb-0">
+      <thead>
+        <tr>
+          <th>Name</th><th>Email</th><th>Company</th><th>Status</th>
+          <th>Stage</th><th>Next follow-up</th><th class="text-end">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for l in leads %}
+        <tr>
+          <td><a class="text-decoration-none" href="{{ url_for('lead_detail', lead_id=l.id) }}">{{ l.name or '—' }}</a></td>
+          <td class="text-secondary">{{ l.email }}</td>
+          <td>{{ l.company or '—' }}</td>
+          <td><span class="badge badge-status badge-{{ l.status }}">{{ l.status }}</span></td>
+          <td>{{ l.current_stage }}</td>
+          <td class="small">{{ l.next_followup_at or '—' }}</td>
+          <td class="text-end">
+            <div class="btn-group btn-group-sm">
+              <a class="btn btn-outline-secondary" href="{{ l.gmail_url }}" target="_blank" title="Open Gmail thread"><i class="bi bi-box-arrow-up-right"></i></a>
+              <a class="btn btn-outline-info" href="{{ url_for('lead_detail', lead_id=l.id) }}" title="View"><i class="bi bi-eye"></i></a>
+              {% if not l.replied %}
+              <form method="post" action="{{ url_for('lead_action', lead_id=l.id) }}" class="d-inline">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="action" value="send">
+                <button class="btn btn-outline-primary" title="Send now"><i class="bi bi-send"></i></button>
+              </form>
+              {% if l.status == 'paused' %}
+              <form method="post" action="{{ url_for('lead_action', lead_id=l.id) }}" class="d-inline">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="action" value="resume">
+                <button class="btn btn-outline-success" title="Resume"><i class="bi bi-play"></i></button>
+              </form>
+              {% else %}
+              <form method="post" action="{{ url_for('lead_action', lead_id=l.id) }}" class="d-inline">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="action" value="pause">
+                <button class="btn btn-outline-warning" title="Pause"><i class="bi bi-pause"></i></button>
+              </form>
+              {% endif %}
+              {% if l.status == 'failed' %}
+              <form method="post" action="{{ url_for('lead_action', lead_id=l.id) }}" class="d-inline">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="action" value="retry">
+                <button class="btn btn-outline-info" title="Retry"><i class="bi bi-arrow-clockwise"></i></button>
+              </form>
+              {% endif %}
+              {% endif %}
+              <form method="post" action="{{ url_for('lead_action', lead_id=l.id) }}" class="d-inline"
+                    data-confirm="Delete this lead permanently?">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="action" value="delete">
+                <button class="btn btn-outline-danger" title="Delete"><i class="bi bi-trash"></i></button>
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% else %}
+        <tr><td colspan="7" class="text-center text-secondary py-5">No leads match your filters.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="d-flex justify-content-between align-items-center mt-3">
+  <span class="text-secondary small">{{ total }} lead(s) · page {{ page }} of {{ pages }}</span>
+  <nav>
+    <ul class="pagination pagination-sm mb-0">
+      <li class="page-item {{ 'disabled' if page <= 1 else '' }}">
+        <a class="page-link" href="{{ url_for('leads', page=page-1, q=q, status=status, sort=sort, dir=dir, per_page=per_page) }}">Previous</a>
+      </li>
+      <li class="page-item {{ 'disabled' if page >= pages else '' }}">
+        <a class="page-link" href="{{ url_for('leads', page=page+1, q=q, status=status, sort=sort, dir=dir, per_page=per_page) }}">Next</a>
+      </li>
+    </ul>
+  </nav>
+</div>
+{% endblock %}

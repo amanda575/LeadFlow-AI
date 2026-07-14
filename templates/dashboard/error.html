@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Error {{ code }}{% endblock %}
+{% block fullpage %}
+<div class="login-wrap">
+  <div class="text-center">
+    <h1 class="display-1 fw-bold">{{ code }}</h1>
+    <p class="lead text-secondary">{{ message }}</p>
+    <a href="{{ url_for('dashboard') }}" class="btn btn-primary">Back to dashboard</a>
+  </div>
+</div>
+{% endblock %}
+{% block content %}
+<div class="text-center py-5">
+  <h1 class="display-3 fw-bold">{{ code }}</h1>
+  <p class="lead text-secondary">{{ message }}</p>
+  <a href="{{ url_for('dashboard') }}" class="btn btn-primary">Back to dashboard</a>
+</div>
+{% endblock %}

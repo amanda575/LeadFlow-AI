@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block heading %}Dashboard{% endblock %}
+{% block content %}
+
+<div class="stat-grid mb-4">
+  <div class="card stat-card accent-total">
+    <i class="bi bi-people-fill stat-icon"></i>
+    <div class="stat-value">{{ stats.total }}</div>
+    <div class="stat-label">Total Leads</div>
+  </div>
+  <div class="card stat-card accent-pending">
+    <i class="bi bi-hourglass-split stat-icon"></i>
+    <div class="stat-value">{{ stats.pending }}</div>
+    <div class="stat-label">Pending</div>
+  </div>
+  <div class="card stat-card">
+    <i class="bi bi-clock-history stat-icon"></i>
+    <div class="stat-value">{{ stats.waiting }}</div>
+    <div class="stat-label">Waiting</div>
+  </div>
+  <div class="card stat-card">
+    <i class="bi bi-send stat-icon"></i>
+    <div class="stat-value">{{ stats.sending_today }}</div>
+    <div class="stat-label">Sending Today</div>
+  </div>
+  <div class="card stat-card accent-replied">
+    <i class="bi bi-reply-fill stat-icon"></i>
+    <div class="stat-value">{{ stats.replied }}</div>
+    <div class="stat-label">Replied</div>
+  </div>
+  <div class="card stat-card">
+    <i class="bi bi-check2-circle stat-icon"></i>
+    <div class="stat-value">{{ stats.completed }}</div>
+    <div class="stat-label">Completed</div>
+  </div>
+  <div class="card stat-card accent-paused">
+    <i class="bi bi-pause-circle stat-icon"></i>
+    <div class="stat-value">{{ stats.paused }}</div>
+    <div class="stat-label">Paused</div>
+  </div>
+  <div class="card stat-card accent-failed">
+    <i class="bi bi-exclamation-triangle stat-icon"></i>
+    <div class="stat-value">{{ stats.failed }}</div>
+    <div class="stat-label">Failed</div>
+  </div>
+</div>
+
+<div class="row g-4">
+  <div class="col-lg-7">
+    <div class="card h-100">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-activity"></i> Recently updated leads</span>
+        <a href="{{ url_for('leads') }}" class="btn btn-sm btn-outline-primary">View all</a>
+      </div>
+      <div class="card-body p-0">
+        <table class="table table-hover mb-0">
+          <thead><tr><th>Name</th><th>Email</th><th>Status</th><th>Stage</th></tr></thead>
+          <tbody>
+            {% for l in recent %}
+            <tr onclick="window.location='{{ url_for('lead_detail', lead_id=l.id) }}'" style="cursor:pointer">
+              <td>{{ l.name or '—' }}</td>
+              <td class="text-secondary">{{ l.email }}</td>
+              <td><span class="badge badge-status badge-{{ l.status }}">{{ l.status }}</span></td>
+              <td>{{ l.current_stage }}</td>
+            </tr>
+            {% else %}
+            <tr><td colspan="4" class="text-center text-secondary py-4">No leads yet. Apply the
+              "{{ app_name }}" Gmail label and click <strong>Scan now</strong>.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-5">
+    <div class="card h-100">
+      <div class="card-header"><i class="bi bi-reply-all-fill text-success"></i> Latest replies</div>
+      <div class="card-body p-0">
+        <ul class="list-group list-group-flush">
+          {% for l in recent_replies %}
+          <li class="list-group-item bg-transparent">
+            <div class="d-flex justify-content-between">
+              <strong>{{ l.name or l.email }}</strong>
+              <span class="badge badge-status badge-replied">{{ l.reply_sentiment or 'replied' }}</span>
+            </div>
+            <div class="small text-secondary">{{ l.email }}</div>
+            <div class="small">{{ l.reply_at }}</div>
+          </li>
+          {% else %}
+          <li class="list-group-item bg-transparent text-secondary text-center py-4">No replies yet.</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

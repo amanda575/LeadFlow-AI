@@ -1,0 +1,11 @@
+Hi {{ name }},
+
+I don't want to be a pest, so this will be my last note for now. If growing
+{{ company or 'your' }} organic traffic is a priority this quarter, I'd love to
+share a few quick wins I spotted.
+
+Just reply "yes" and I'll send them over.
+
+Warm regards,
+Amanda
+SeoLeads.Me

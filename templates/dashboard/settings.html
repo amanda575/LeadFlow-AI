@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block title %}Settings{% endblock %}
+{% block heading %}Settings{% endblock %}
+{% block content %}
+<form method="post" action="{{ url_for('settings_save') }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <div class="row g-4">
+
+    <div class="col-lg-6">
+      <div class="card">
+        <div class="card-header"><i class="bi bi-clock"></i> Business hours</div>
+        <div class="card-body">
+          <div class="row g-2">
+            <div class="col-6">
+              <label class="form-label small">Start hour (0–23)</label>
+              <input type="number" min="0" max="23" class="form-control" name="business_start_hour" value="{{ values.business_start_hour }}">
+            </div>
+            <div class="col-6">
+              <label class="form-label small">End hour (0–23)</label>
+              <input type="number" min="0" max="23" class="form-control" name="business_end_hour" value="{{ values.business_end_hour }}">
+            </div>
+            <div class="col-12">
+              <label class="form-label small">Timezone</label>
+              <input class="form-control" name="business_timezone" value="{{ values.business_timezone }}" placeholder="America/New_York">
+            </div>
+            <div class="col-12 form-check form-switch mt-2 ms-2">
+              <input class="form-check-input" type="checkbox" name="business_weekdays_only" id="wkdays"
+                     {{ 'checked' if values.business_weekdays_only == 'true' else '' }}>
+              <label class="form-check-label" for="wkdays">Weekdays only</label>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-6">
+      <div class="card">
+        <div class="card-header"><i class="bi bi-stopwatch"></i> Scheduler intervals (minutes)</div>
+        <div class="card-body row g-2">
+          <div class="col-4">
+            <label class="form-label small">Import</label>
+            <input type="number" min="1" class="form-control" name="scheduler_import_minutes" value="{{ values.scheduler_import_minutes }}">
+          </div>
+          <div class="col-4">
+            <label class="form-label small">Replies</label>
+            <input type="number" min="1" class="form-control" name="scheduler_reply_minutes" value="{{ values.scheduler_reply_minutes }}">
+          </div>
+          <div class="col-4">
+            <label class="form-label small">Send</label>
+            <input type="number" min="1" class="form-control" name="scheduler_send_minutes" value="{{ values.scheduler_send_minutes }}">
+          </div>
+          <div class="col-12 mt-2">
+            <label class="form-label small">Max retry count</label>
+            <input type="number" min="1" class="form-control" name="max_retry_count" value="{{ values.max_retry_count }}">
+          </div>
+          <p class="small text-secondary mt-2 mb-0">Interval changes apply after a restart.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-6">
+      <div class="card">
+        <div class="card-header"><i class="bi bi-bell"></i> Notifications &amp; theme</div>
+        <div class="card-body">
+          <div class="form-check form-switch"><input class="form-check-input" type="checkbox" name="notify_desktop" id="nd" {{ 'checked' if values.notify_desktop == 'true' else '' }}><label class="form-check-label" for="nd">Desktop notifications</label></div>
+          <div class="form-check form-switch"><input class="form-check-input" type="checkbox" name="notify_sound" id="ns" {{ 'checked' if values.notify_sound == 'true' else '' }}><label class="form-check-label" for="ns">Sound notifications</label></div>
+          <div class="form-check form-switch"><input class="form-check-input" type="checkbox" name="notify_console" id="nc" {{ 'checked' if values.notify_console == 'true' else '' }}><label class="form-check-label" for="nc">Console notifications</label></div>
+          <div class="form-check form-switch mb-2"><input class="form-check-input" type="checkbox" name="auto_remove_label" id="arl" {{ 'checked' if values.auto_remove_label == 'true' else '' }}><label class="form-check-label" for="arl">Auto-remove Gmail label on completion</label></div>
+          <label class="form-label small">Dashboard theme</label>
+          <select class="form-select" name="theme">
+            <option value="dark" {{ 'selected' if values.theme == 'dark' else '' }}>Dark</option>
+            <option value="light" {{ 'selected' if values.theme == 'light' else '' }}>Light</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-lg-6">
+      <div class="card">
+        <div class="card-header"><i class="bi bi-shield-lock"></i> SMTP &amp; Gmail (from .env)</div>
+        <div class="card-body small">
+          <p class="mb-1"><strong>SMTP host:</strong> {{ smtp.host }}:{{ smtp.port }}
+            {% if smtp.configured %}<span class="badge bg-success">configured</span>{% else %}<span class="badge bg-danger">not set</span>{% endif %}</p>
+          <p class="mb-1"><strong>From:</strong> {{ smtp.from_email }}</p>
+          <p class="mb-1"><strong>TLS:</strong> {{ smtp.use_tls }} · <strong>SSL:</strong> {{ smtp.use_ssl }}</p>
+          <hr>
+          <p class="mb-1"><strong>Gmail label:</strong> {{ gmail.label }}
+            {% if gmail.configured %}<span class="badge bg-success">credentials present</span>{% else %}<span class="badge bg-warning text-dark">no credentials</span>{% endif %}</p>
+          <p class="text-secondary mb-0">SMTP &amp; Gmail credentials are managed in
+            <span class="code-pill">.env</span> for security and are never editable from the web UI.</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+  <button class="btn btn-primary mt-4" type="submit"><i class="bi bi-save"></i> Save settings</button>
+</form>
+{% endblock %}

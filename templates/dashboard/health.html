@@ -1,0 +1,74 @@
+{% extends "base.html" %}
+{% block title %}Health{% endblock %}
+{% block heading %}System Health{% endblock %}
+{% block content %}
+<div id="health-grid" class="row g-4">
+  <div class="col-md-6 col-xl-3">
+    <div class="card stat-card">
+      <div class="stat-label">Database</div>
+      <div class="stat-value"><span id="h-db" class="health-dot {{ 'health-ok' if health.database_ok else 'health-bad' }}"></span></div>
+    </div>
+  </div>
+  <div class="col-md-6 col-xl-3">
+    <div class="card stat-card">
+      <div class="stat-label">Scheduler</div>
+      <div class="stat-value"><span id="h-sched" class="health-dot {{ 'health-ok' if health.scheduler_running else 'health-bad' }}"></span></div>
+    </div>
+  </div>
+  <div class="col-md-6 col-xl-3">
+    <div class="card stat-card">
+      <div class="stat-label">SMTP</div>
+      <div class="stat-value"><span id="h-smtp" class="health-dot {{ 'health-ok' if health.smtp_ok else 'health-bad' }}"></span></div>
+    </div>
+  </div>
+  <div class="col-md-6 col-xl-3">
+    <div class="card stat-card">
+      <div class="stat-label">Gmail</div>
+      <div class="stat-value"><span id="h-gmail" class="health-dot {{ 'health-ok' if health.gmail_ok else 'health-bad' }}"></span></div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4 mt-1">
+  <div class="col-lg-6">
+    <div class="card">
+      <div class="card-header"><i class="bi bi-hdd"></i> Resources</div>
+      <div class="card-body">
+        <p class="mb-2">Disk usage: <strong>{{ health.disk_used_gb }} GB</strong> /
+          {{ health.disk_total_gb }} GB ({{ health.disk_percent }}%)</p>
+        <div class="progress mb-3" style="height:8px">
+          <div class="progress-bar" style="width: {{ health.disk_percent }}%"></div>
+        </div>
+        <p class="mb-1">Log file size: <strong>{{ health.log_size_mb }} MB</strong></p>
+        <p class="mb-0">Log rows in DB: <strong>{{ health.log_rows }}</strong></p>
+      </div>
+    </div>
+  </div>
+  <div class="col-lg-6">
+    <div class="card">
+      <div class="card-header"><i class="bi bi-clock-history"></i> Last activity</div>
+      <div class="card-body">
+        <p class="mb-1">Last scan: <strong>{{ health.last_scan or '—' }}</strong></p>
+        <p class="mb-1">Last send: <strong>{{ health.last_send or '—' }}</strong></p>
+        <p class="mb-0">Last reply: <strong>{{ health.last_reply or '—' }}</strong></p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card mt-4">
+  <div class="card-header"><i class="bi bi-list-task"></i> Scheduled jobs</div>
+  <div class="card-body p-0">
+    <table class="table mb-0">
+      <thead><tr><th>Job</th><th>Next run (UTC)</th></tr></thead>
+      <tbody>
+        {% for j in jobs %}
+        <tr><td><span class="code-pill">{{ j.id }}</span></td><td class="small">{{ j.next_run or '—' }}</td></tr>
+        {% else %}
+        <tr><td colspan="2" class="text-secondary text-center py-3">Scheduler not running.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

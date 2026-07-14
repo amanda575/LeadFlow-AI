@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Statistics{% endblock %}
+{% block heading %}Statistics{% endblock %}
+{% block content %}
+<div class="row g-4 mb-4">
+  <div class="col-md-3"><div class="card stat-card accent-total"><div class="stat-value">{{ stats.total }}</div><div class="stat-label">Total leads</div></div></div>
+  <div class="col-md-3"><div class="card stat-card accent-replied"><div class="stat-value">{{ stats.replied }}</div><div class="stat-label">Replied</div></div></div>
+  <div class="col-md-3"><div class="card stat-card"><div class="stat-value">{{ reply_rate }}%</div><div class="stat-label">Reply rate</div></div></div>
+  <div class="col-md-3"><div class="card stat-card"><div class="stat-value">{{ stats.completed }}</div><div class="stat-label">Completed</div></div></div>
+</div>
+
+<div class="card">
+  <div class="card-header"><i class="bi bi-graph-up"></i> Sends vs replies (last 14 days)</div>
+  <div class="card-body">
+    <canvas id="statsChart" height="90"></canvas>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+  var labels = {{ series | map(attribute=0) | list | tojson }};
+  var sent = {{ series | map(attribute=1) | map(attribute='sent') | list | tojson }};
+  var replied = {{ series | map(attribute=1) | map(attribute='replied') | list | tojson }};
+  window.LeadFlowChart("statsChart", labels, sent, replied);
+</script>
+{% endblock %}

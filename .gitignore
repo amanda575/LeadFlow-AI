@@ -1,0 +1,34 @@
+# ============================================================
+#  Secrets & credentials — NEVER commit these
+# ============================================================
+.env
+.env.*
+!.env.example
+# ignore everything inside credentials/ except the placeholder
+credentials/*
+!credentials/.gitkeep
+
+# ============================================================
+#  Runtime data (ignore contents, keep the folders)
+# ============================================================
+database/*
+!database/.gitkeep
+logs/*
+!logs/.gitkeep
+backups/*
+!backups/.gitkeep
+
+# ============================================================
+#  Python
+# ============================================================
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+
+# ============================================================
+#  OS
+# ============================================================
+.DS_Store

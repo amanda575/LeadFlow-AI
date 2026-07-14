@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}{{ lead.name or lead.email }}{% endblock %}
+{% block heading %}Lead detail{% endblock %}
+{% block content %}
+<div class="row g-4">
+  <div class="col-lg-7">
+    <div class="card">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="bi bi-person-vcard"></i> {{ lead.name or '—' }}</span>
+        <span class="badge badge-status badge-{{ lead.status }}">{{ lead.status }}</span>
+      </div>
+      <div class="card-body">
+        <dl class="row mb-0">
+          <dt class="col-sm-4">Email</dt><dd class="col-sm-8">{{ lead.email }}</dd>
+          <dt class="col-sm-4">Company</dt><dd class="col-sm-8">{{ lead.company or '—' }}</dd>
+          <dt class="col-sm-4">Website</dt>
+          <dd class="col-sm-8">{% if lead.website %}<a href="{{ lead.website }}" target="_blank">{{ lead.website }}</a>{% else %}—{% endif %}</dd>
+          <dt class="col-sm-4">Subject</dt><dd class="col-sm-8">{{ lead.subject or '—' }}</dd>
+          <dt class="col-sm-4">Stage</dt><dd class="col-sm-8">{{ lead.current_stage }}</dd>
+          <dt class="col-sm-4">Added</dt><dd class="col-sm-8">{{ lead.date_added }}</dd>
+          <dt class="col-sm-4">Next follow-up</dt><dd class="col-sm-8">{{ lead.next_followup_at or '—' }}</dd>
+          <dt class="col-sm-4">Last sent</dt><dd class="col-sm-8">{{ lead.last_sent_at or '—' }}</dd>
+          <dt class="col-sm-4">Thread ID</dt><dd class="col-sm-8"><span class="code-pill">{{ lead.thread_id }}</span></dd>
+          {% if lead.last_error %}
+          <dt class="col-sm-4 text-danger">Last error</dt><dd class="col-sm-8 text-danger small">{{ lead.last_error }}</dd>
+          {% endif %}
+        </dl>
+        <hr>
+        <a class="btn btn-sm btn-outline-secondary" href="{{ lead.gmail_url }}" target="_blank">
+          <i class="bi bi-box-arrow-up-right"></i> Open Gmail thread
+        </a>
+        <a class="btn btn-sm btn-outline-info" href="{{ url_for('leads') }}"><i class="bi bi-arrow-left"></i> Back</a>
+      </div>
+    </div>
+
+    {% if lead.replied %}
+    <div class="card mt-4 border-success">
+      <div class="card-header text-success"><i class="bi bi-reply-fill"></i> Reply received</div>
+      <div class="card-body">
+        <p class="small text-secondary mb-1">From {{ lead.reply_from }} · {{ lead.reply_at }}
+          · sentiment: <strong>{{ lead.reply_sentiment or 'n/a' }}</strong></p>
+        <pre class="mb-0" style="white-space:pre-wrap">{{ lead.reply_body or '' }}</pre>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="col-lg-5">
+    <div class="card">
+      <div class="card-header"><i class="bi bi-clock-history"></i> Activity history</div>
+      <div class="card-body p-0">
+        <ul class="list-group list-group-flush">
+          {% for a in activities %}
+          <li class="list-group-item bg-transparent">
+            <div class="d-flex justify-content-between">
+              <strong class="text-capitalize">{{ a.action }}</strong>
+              <span class="small text-secondary">{{ a.created_at }}</span>
+            </div>
+            {% if a.detail %}<div class="small text-secondary">{{ a.detail }}</div>{% endif %}
+          </li>
+          {% else %}
+          <li class="list-group-item bg-transparent text-secondary text-center py-4">No activity.</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block title %}Templates{% endblock %}
+{% block heading %}Email Templates{% endblock %}
+{% block content %}
+<div class="row g-4">
+  <div class="col-lg-7">
+    <div class="card">
+      <div class="card-header"><i class="bi bi-pencil-square"></i> Edit / create template</div>
+      <div class="card-body">
+        <form id="template-form" method="post" action="{{ url_for('template_save') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="mb-2">
+            <label class="form-label small">Name (e.g. followup1.html)</label>
+            <input class="form-control" name="name" required>
+          </div>
+          <div class="mb-2">
+            <label class="form-label small">Subject</label>
+            <input class="form-control" name="subject" placeholder="Following up, {{ '{{ name }}' }}">
+          </div>
+          <div class="mb-2">
+            <label class="form-label small">Description</label>
+            <input class="form-control" name="description">
+          </div>
+          <div class="mb-2">
+            <label class="form-label small">HTML body</label>
+            <textarea class="form-control font-monospace" name="html_body" rows="8"></textarea>
+          </div>
+          <div class="mb-3">
+            <label class="form-label small">Plain-text body (optional; auto-derived if blank)</label>
+            <textarea class="form-control font-monospace" name="text_body" rows="5"></textarea>
+          </div>
+          <div class="d-flex gap-2">
+            <button class="btn btn-primary" type="submit"><i class="bi bi-save"></i> Save</button>
+            <button class="btn btn-outline-info" type="button" id="preview-btn"><i class="bi bi-eye"></i> Live preview</button>
+          </div>
+          <p class="small text-secondary mt-2 mb-0">
+            Variables: <span class="code-pill">{{ '{{ name }}' }}</span>
+            <span class="code-pill">{{ '{{ company }}' }}</span>
+            <span class="code-pill">{{ '{{ website }}' }}</span>
+            <span class="code-pill">{{ '{{ service }}' }}</span>
+            <span class="code-pill">{{ '{{ industry }}' }}</span>
+            <span class="code-pill">{{ '{{ city }}' }}</span>
+            <span class="code-pill">{{ '{{ custom }}' }}</span>
+          </p>
+        </form>
+      </div>
+    </div>
+
+    <div class="card mt-4">
+      <div class="card-header"><i class="bi bi-eye-fill"></i> Preview</div>
+      <div class="card-body">
+        <p class="mb-1"><strong>Subject:</strong> <span id="preview-subject" class="text-secondary">—</span></p>
+        <iframe id="preview-frame" class="preview-frame" title="HTML preview"></iframe>
+        <details class="mt-2"><summary class="small text-secondary">Plain text</summary>
+          <pre id="preview-text" class="small mt-2" style="white-space:pre-wrap"></pre>
+        </details>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-5">
+    <div class="card">
+      <div class="card-header"><i class="bi bi-collection"></i> Saved templates ({{ templates|length }})</div>
+      <div class="card-body p-0">
+        <ul class="list-group list-group-flush">
+          {% for t in templates %}
+          <li class="list-group-item bg-transparent">
+            <div class="d-flex justify-content-between align-items-start">
+              <div>
+                <strong>{{ t.name }}</strong>
+                <div class="small text-secondary">{{ t.description or t.subject }}</div>
+              </div>
+              <div class="btn-group btn-group-sm">
+                <button class="btn btn-outline-info" data-load-template='{{ t|tojson }}' title="Load into editor">
+                  <i class="bi bi-pencil"></i>
+                </button>
+                <form method="post" action="{{ url_for('template_delete', template_id=t.id) }}"
+                      data-confirm="Delete template {{ t.name }}?">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button class="btn btn-outline-danger"><i class="bi bi-trash"></i></button>
+                </form>
+              </div>
+            </div>
+          </li>
+          {% else %}
+          <li class="list-group-item bg-transparent text-secondary text-center py-4">No templates yet.</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

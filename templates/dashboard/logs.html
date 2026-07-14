@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}Logs{% endblock %}
+{% block heading %}Logs{% endblock %}
+{% block content %}
+<form class="mb-3 d-flex gap-2" method="get" action="{{ url_for('logs_page') }}">
+  <select name="category" class="form-select w-auto">
+    <option value="">All categories</option>
+    {% for c in categories %}
+    <option value="{{ c }}" {{ 'selected' if category == c else '' }}>{{ c }}</option>
+    {% endfor %}
+  </select>
+  <button class="btn btn-primary" type="submit"><i class="bi bi-funnel"></i> Filter</button>
+</form>
+
+<div class="card">
+  <div class="card-body p-0">
+    <table class="table table-sm table-hover mb-0">
+      <thead><tr><th>Time</th><th>Category</th><th>Level</th><th>Message</th></tr></thead>
+      <tbody>
+        {% for r in logs %}
+        <tr>
+          <td class="small text-secondary" style="white-space:nowrap">{{ r.created_at }}</td>
+          <td><span class="code-pill">{{ r.category }}</span></td>
+          <td>
+            {% set lvl = r.level %}
+            <span class="badge bg-{{ 'danger' if lvl in ['ERROR','CRITICAL'] else ('warning text-dark' if lvl == 'WARNING' else 'secondary') }}">{{ lvl }}</span>
+          </td>
+          <td class="small">{{ r.message }}</td>
+        </tr>
+        {% else %}
+        <tr><td colspan="4" class="text-center text-secondary py-4">No log entries.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<nav class="mt-3">
+  <ul class="pagination pagination-sm mb-0">
+    <li class="page-item {{ 'disabled' if page <= 1 else '' }}">
+      <a class="page-link" href="{{ url_for('logs_page', page=page-1, category=category) }}">Previous</a>
+    </li>
+    <li class="page-item disabled"><span class="page-link">Page {{ page }} of {{ pages }}</span></li>
+    <li class="page-item {{ 'disabled' if page >= pages else '' }}">
+      <a class="page-link" href="{{ url_for('logs_page', page=page+1, category=category) }}">Next</a>
+    </li>
+  </ul>
+</nav>
+{% endblock %}

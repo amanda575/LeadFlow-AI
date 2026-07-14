@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block title %}Follow-up Sequence{% endblock %}
+{% block heading %}Follow-up Sequence{% endblock %}
+{% block content %}
+<div class="row g-4">
+  <div class="col-lg-7">
+    <div class="card">
+      <div class="card-header"><i class="bi bi-list-ol"></i> Steps</div>
+      <div class="card-body p-0">
+        <table class="table mb-0">
+          <thead><tr><th>Step</th><th>Delay (days)</th><th>Template</th><th>Enabled</th><th></th></tr></thead>
+          <tbody>
+            {% for st in steps %}
+            <tr>
+              <td><strong>{{ st.step_number }}</strong></td>
+              <td>{{ st.delay_days }}</td>
+              <td><span class="code-pill">{{ st.template_name }}</span></td>
+              <td>
+                {% if st.enabled %}<span class="badge bg-success">On</span>
+                {% else %}<span class="badge bg-secondary">Off</span>{% endif %}
+              </td>
+              <td class="text-end">
+                <form method="post" action="{{ url_for('sequence_delete', step_id=st.id) }}"
+                      data-confirm="Delete step {{ st.step_number }}?">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button class="btn btn-sm btn-outline-danger"><i class="bi bi-trash"></i></button>
+                </form>
+              </td>
+            </tr>
+            {% else %}
+            <tr><td colspan="5" class="text-center text-secondary py-4">No steps defined.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="col-lg-5">
+    <div class="card">
+      <div class="card-header"><i class="bi bi-plus-circle"></i> Add / update step</div>
+      <div class="card-body">
+        <form method="post" action="{{ url_for('sequence_save') }}">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="mb-2">
+            <label class="form-label small">Step number</label>
+            <input type="number" min="1" class="form-control" name="step_number" required>
+          </div>
+          <div class="mb-2">
+            <label class="form-label small">Delay (days from previous send)</label>
+            <input type="number" min="0" class="form-control" name="delay_days" value="2" required>
+          </div>
+          <div class="mb-2">
+            <label class="form-label small">Template</label>
+            <select class="form-select" name="template_name" required>
+              {% for n in template_names %}<option value="{{ n }}">{{ n }}</option>{% endfor %}
+            </select>
+          </div>
+          <div class="form-check form-switch mb-3">
+            <input class="form-check-input" type="checkbox" name="enabled" id="enabled" checked>
+            <label class="form-check-label" for="enabled">Enabled</label>
+          </div>
+          <button class="btn btn-primary" type="submit"><i class="bi bi-save"></i> Save step</button>
+        </form>
+        <p class="small text-secondary mt-3 mb-0">
+          Existing step numbers are updated in place. The engine processes enabled
+          steps in ascending order; the next due time is computed from each send.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Exports{% endblock %}
+{% block heading %}Exports{% endblock %}
+{% block content %}
+<div class="card">
+  <div class="card-header"><i class="bi bi-download"></i> Export leads to CSV</div>
+  <div class="card-body">
+    <p class="text-secondary">Download a CSV of your leads filtered by status.</p>
+    <div class="d-flex flex-wrap gap-2">
+      {% for scope, label, icon in [
+        ('all','All leads','bi-collection'),
+        ('replied','Replied','bi-reply-fill'),
+        ('pending','Pending','bi-hourglass'),
+        ('waiting','Waiting','bi-clock'),
+        ('completed','Completed','bi-check2-circle'),
+        ('failed','Failed','bi-exclamation-triangle'),
+        ('paused','Paused','bi-pause-circle')
+      ] %}
+      <a class="btn btn-outline-primary" href="{{ url_for('export_csv', scope=scope) }}">
+        <i class="bi {{ icon }}"></i> {{ label }}
+      </a>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endblock %}
