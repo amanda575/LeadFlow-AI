@@ -85,7 +85,7 @@
               <span class="badge badge-status badge-replied">{{ l.reply_sentiment or 'replied' }}</span>
             </div>
             <div class="small text-secondary">{{ l.email }}</div>
-            <div class="small">{{ l.reply_at }}</div>
+            <div class="small">{{ l.reply_at | human }}</div>
           </li>
           {% else %}
           <li class="list-group-item bg-transparent text-secondary text-center py-4">No replies yet.</li>

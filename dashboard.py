@@ -16,6 +16,8 @@ from __future__ import annotations
 import csv
 import io
 import time
+
+import pytz
 from collections import defaultdict
 from datetime import datetime, timedelta
 from functools import wraps
@@ -153,6 +155,27 @@ def _status_counts(session_obj) -> dict:
 # Application factory
 # --------------------------------------------------------------------------- #
 
+def _human_dt(value) -> str:
+    """Format a stored UTC datetime/ISO string as a readable time in the
+    configured business timezone, e.g. "Jul 17, 2026 · 12:11 AM IST"."""
+    if not value:
+        return "—"
+    if isinstance(value, str):
+        try:
+            value = datetime.fromisoformat(value)
+        except ValueError:
+            return value
+    tz_name = get_setting("business_timezone", "Asia/Kolkata")
+    try:
+        tz = pytz.timezone(tz_name)
+    except Exception:
+        tz = pytz.utc
+    aware = pytz.utc.localize(value) if value.tzinfo is None else value
+    local = aware.astimezone(tz)
+    abbr = local.strftime("%Z") or ""
+    return local.strftime("%b %d, %Y · %I:%M %p").replace(" 0", " ") + (f" {abbr}" if abbr else "")
+
+
 def create_app(scheduler_ref=None) -> Flask:
     app = Flask(
         __name__,
@@ -169,6 +192,7 @@ def create_app(scheduler_ref=None) -> Flask:
         MAX_CONTENT_LENGTH=2 * 1024 * 1024,
     )
     csrf.init_app(app)
+    app.jinja_env.filters["human"] = _human_dt
 
     if scheduler_ref is not None:
         health_monitor.bind_scheduler(scheduler_ref)

@@ -17,9 +17,9 @@
           <dd class="col-sm-8">{% if lead.website %}<a href="{{ lead.website }}" target="_blank">{{ lead.website }}</a>{% else %}—{% endif %}</dd>
           <dt class="col-sm-4">Subject</dt><dd class="col-sm-8">{{ lead.subject or '—' }}</dd>
           <dt class="col-sm-4">Stage</dt><dd class="col-sm-8">{{ lead.current_stage }}</dd>
-          <dt class="col-sm-4">Added</dt><dd class="col-sm-8">{{ lead.date_added }}</dd>
-          <dt class="col-sm-4">Next follow-up</dt><dd class="col-sm-8">{{ lead.next_followup_at or '—' }}</dd>
-          <dt class="col-sm-4">Last sent</dt><dd class="col-sm-8">{{ lead.last_sent_at or '—' }}</dd>
+          <dt class="col-sm-4">Added</dt><dd class="col-sm-8">{{ lead.date_added | human }}</dd>
+          <dt class="col-sm-4">Next follow-up</dt><dd class="col-sm-8">{{ lead.next_followup_at | human }}</dd>
+          <dt class="col-sm-4">Last sent</dt><dd class="col-sm-8">{{ lead.last_sent_at | human }}</dd>
           <dt class="col-sm-4">Thread ID</dt><dd class="col-sm-8"><span class="code-pill">{{ lead.thread_id }}</span></dd>
           {% if lead.last_error %}
           <dt class="col-sm-4 text-danger">Last error</dt><dd class="col-sm-8 text-danger small">{{ lead.last_error }}</dd>
@@ -37,7 +37,7 @@
     <div class="card mt-4 border-success">
       <div class="card-header text-success"><i class="bi bi-reply-fill"></i> Reply received</div>
       <div class="card-body">
-        <p class="small text-secondary mb-1">From {{ lead.reply_from }} · {{ lead.reply_at }}
+        <p class="small text-secondary mb-1">From {{ lead.reply_from }} · {{ lead.reply_at | human }}
           · sentiment: <strong>{{ lead.reply_sentiment or 'n/a' }}</strong></p>
         <pre class="mb-0" style="white-space:pre-wrap">{{ lead.reply_body or '' }}</pre>
       </div>
@@ -54,7 +54,7 @@
           <li class="list-group-item bg-transparent">
             <div class="d-flex justify-content-between">
               <strong class="text-capitalize">{{ a.action }}</strong>
-              <span class="small text-secondary">{{ a.created_at }}</span>
+              <span class="small text-secondary">{{ a.created_at | human }}</span>
             </div>
             {% if a.detail %}<div class="small text-secondary">{{ a.detail }}</div>{% endif %}
           </li>

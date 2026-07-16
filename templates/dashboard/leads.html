@@ -56,7 +56,7 @@
           <td>{{ l.company or '—' }}</td>
           <td><span class="badge badge-status badge-{{ l.status }}">{{ l.status }}</span></td>
           <td>{{ l.current_stage }}</td>
-          <td class="small">{{ l.next_followup_at or '—' }}</td>
+          <td class="small">{{ l.next_followup_at | human }}</td>
           <td class="text-end">
             <div class="btn-group btn-group-sm">
               <a class="btn btn-outline-secondary" href="{{ l.gmail_url }}" target="_blank" title="Open Gmail thread"><i class="bi bi-box-arrow-up-right"></i></a>

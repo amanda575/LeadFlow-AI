@@ -330,6 +330,17 @@ class LeadService:
             ):
                 return False
 
+            # Hard schedule guard: never send before the follow-up is actually
+            # due (unless an operator forces it via "Send now"). This defends
+            # against premature sends from overlapping scheduler runs during a
+            # redeploy, restarts, or any stale/duplicated queue entry — the exact
+            # cause of multiple follow-ups going out minutes apart.
+            if not force and (
+                lead.next_followup_at is None
+                or lead.next_followup_at > datetime.utcnow()
+            ):
+                return False
+
             step = self._step_after(lead.current_stage)
             if step is None:
                 lead.status = LeadStatus.COMPLETED

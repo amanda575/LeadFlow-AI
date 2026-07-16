@@ -226,7 +226,7 @@ def load_config() -> Config:
     business_hours = BusinessHoursConfig(
         start_hour=_get_int("BUSINESS_START_HOUR", 9),
         end_hour=_get_int("BUSINESS_END_HOUR", 17),
-        timezone=_get_str("BUSINESS_TIMEZONE", "America/New_York"),
+        timezone=_get_str("BUSINESS_TIMEZONE", "Asia/Kolkata"),
         weekdays_only=_get_bool("BUSINESS_WEEKDAYS_ONLY", True),
     )
 
