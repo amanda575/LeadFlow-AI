@@ -77,15 +77,28 @@ _LOGIN_MAX = 10      # attempts per window
 # Auth helpers
 # --------------------------------------------------------------------------- #
 
-def _password_hash() -> str:
-    """Resolve the dashboard password hash (config hash wins; else hash plain).
+_USER_HASHES: Optional[dict] = None
 
-    Uses pbkdf2:sha256 explicitly: it is available on every Python build, unlike
-    scrypt (Werkzeug's default), which requires an OpenSSL with scrypt support.
+
+def _user_hashes() -> dict:
+    """Lazily hash every configured dashboard password (pbkdf2:sha256).
+
+    pbkdf2 is used explicitly: it is available on every Python build, unlike
+    scrypt (Werkzeug's default), which needs an OpenSSL with scrypt support.
     """
-    if config.dashboard_password_hash:
-        return config.dashboard_password_hash
-    return generate_password_hash(config.dashboard_password, method="pbkdf2:sha256")
+    global _USER_HASHES
+    if _USER_HASHES is None:
+        _USER_HASHES = {
+            username: generate_password_hash(password, method="pbkdf2:sha256")
+            for username, password in config.dashboard_users.items()
+        }
+    return _USER_HASHES
+
+
+def _verify_credentials(username: str, password: str) -> bool:
+    """Return True if username/password match an allowed full-access account."""
+    stored = _user_hashes().get(username)
+    return bool(stored and check_password_hash(stored, password))
 
 
 def login_required(view):
@@ -253,9 +266,7 @@ def _register_auth(app: Flask) -> None:
 
             username = (request.form.get("username") or "").strip()
             password = request.form.get("password") or ""
-            if username == config.dashboard_username and check_password_hash(
-                _password_hash(), password
-            ):
+            if _verify_credentials(username, password):
                 session.clear()
                 session["authenticated"] = True
                 session["username"] = username

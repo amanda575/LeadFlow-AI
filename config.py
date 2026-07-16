@@ -13,7 +13,7 @@ from __future__ import annotations
 import os
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import List
+from typing import Dict, List
 
 from dotenv import load_dotenv
 
@@ -145,6 +145,8 @@ class Config:
     dashboard_username: str
     dashboard_password: str
     dashboard_password_hash: str
+    # username -> password for every allowed dashboard login (all full access).
+    dashboard_users: Dict[str, str]
     session_timeout_minutes: int
     # Only mark the session cookie "Secure" (HTTPS-only) when actually serving
     # over HTTPS. Default False so local http://localhost logins work.
@@ -250,6 +252,22 @@ def load_config() -> Config:
         model=_get_str("AI_MODEL"),
     )
 
+    # Dashboard logins. DASHBOARD_USERS ("user1:pass1,user2:pass2") allows several
+    # full-access accounts; otherwise fall back to the single DASHBOARD_USERNAME.
+    dashboard_users: Dict[str, str] = {}
+    raw_users = _get_str("DASHBOARD_USERS")
+    if raw_users:
+        for pair in raw_users.split(","):
+            pair = pair.strip()
+            if ":" in pair:
+                username, password = pair.split(":", 1)
+                if username.strip():
+                    dashboard_users[username.strip()] = password
+    if not dashboard_users:
+        dashboard_users[_get_str("DASHBOARD_USERNAME", "admin")] = _get_str(
+            "DASHBOARD_PASSWORD", "changeme"
+        )
+
     return Config(
         base_dir=BASE_DIR,
         secret_key=_get_str("SECRET_KEY", "dev-insecure-secret-change-me"),
@@ -261,6 +279,7 @@ def load_config() -> Config:
         dashboard_username=_get_str("DASHBOARD_USERNAME", "admin"),
         dashboard_password=_get_str("DASHBOARD_PASSWORD", "changeme"),
         dashboard_password_hash=_get_str("DASHBOARD_PASSWORD_HASH"),
+        dashboard_users=dashboard_users,
         session_timeout_minutes=_get_int("SESSION_TIMEOUT_MINUTES", 60),
         session_cookie_secure=_get_bool("SESSION_COOKIE_SECURE", False),
         send_method=_get_str("SEND_METHOD", "smtp").strip().lower() or "smtp",
