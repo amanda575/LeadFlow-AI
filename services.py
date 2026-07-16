@@ -110,6 +110,13 @@ class LeadService:
 
         if created:
             log.info("Imported %d new lead(s)", created)
+            # Fire any now-due follow-ups (i.e. the immediate step 1) in the same
+            # cycle so freshly labelled leads go out right away instead of waiting
+            # for the next send tick.
+            try:
+                self.send_due_emails()
+            except Exception as exc:
+                log.error("Post-import send failed: %s", exc)
         return created
 
     @staticmethod
