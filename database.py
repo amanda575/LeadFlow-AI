@@ -129,51 +129,83 @@ DEFAULT_SETTINGS = {
 _DEFAULT_TEMPLATES = [
     {
         "name": "followup1.html",
-        "subject": "Following up, {{ name }}",
-        "description": "First gentle follow-up (default step 1).",
+        "subject": "",
+        "description": "Step 1 - immediate gentle follow-up",
         "html_body": (
             "<p>Hi {{ name }},</p>\n"
-            "<p>I wanted to gently follow up on my previous email regarding "
-            "how {{ company or 'your business' }} could attract more qualified "
-            "leads through SEO.</p>\n"
-            "<p>Would you be open to a quick 15-minute chat this week?</p>\n"
-            "<p>Best,<br>Amanda<br>SeoLeads.Me</p>"
+            "<p>Just following up to see if you had a chance to review the "
+            "information I sent over.</p>\n"
+            "<p>If you have any questions about our lead quality, niches, "
+            "delivery process, or pricing, I'd be happy to answer them.</p>\n"
+            "<p>Whenever you're ready, we're here to help you get started.</p>\n"
+            "<p>Looking forward to hearing from you.</p>\n"
+            "<p>Regards,<br>Amanda</p>"
         ),
         "text_body": (
             "Hi {{ name }},\n\n"
-            "I wanted to gently follow up on my previous email regarding how "
-            "{{ company or 'your business' }} could attract more qualified leads "
-            "through SEO.\n\n"
-            "Would you be open to a quick 15-minute chat this week?\n\n"
-            "Best,\nAmanda\nSeoLeads.Me"
+            "Just following up to see if you had a chance to review the "
+            "information I sent over.\n"
+            "If you have any questions about our lead quality, niches, delivery "
+            "process, or pricing, I'd be happy to answer them.\n\n"
+            "Whenever you're ready, we're here to help you get started.\n\n"
+            "Looking forward to hearing from you.\n\n"
+            "Regards,\nAmanda"
         ),
     },
     {
         "name": "followup2.html",
-        "subject": "One more note for you, {{ name }}",
-        "description": "Second, final follow-up (default step 2).",
+        "subject": "",
+        "description": "Step 2 - after 2 days",
         "html_body": (
             "<p>Hi {{ name }},</p>\n"
-            "<p>I don't want to be a pest, so this will be my last note for now. "
-            "If growing {{ company or 'your' }} organic traffic is a priority "
-            "this quarter, I'd love to share a few quick wins I spotted.</p>\n"
-            "<p>Just reply \"yes\" and I'll send them over.</p>\n"
-            "<p>Warm regards,<br>Amanda<br>SeoLeads.Me</p>"
+            "<p>I just wanted to follow up and ask if there's anything holding "
+            "you back from moving forward.</p>\n"
+            "<p>Is it the pricing, the lead quality, or is there something else "
+            "on your mind?</p>\n"
+            "<p>Let me know—I'm happy to answer any questions or clear up any "
+            "concerns.</p>\n"
+            "<p>Regards,<br>Amanda</p>"
         ),
         "text_body": (
             "Hi {{ name }},\n\n"
-            "I don't want to be a pest, so this will be my last note for now. If "
-            "growing {{ company or 'your' }} organic traffic is a priority this "
-            "quarter, I'd love to share a few quick wins I spotted.\n\n"
-            "Just reply \"yes\" and I'll send them over.\n\n"
-            "Warm regards,\nAmanda\nSeoLeads.Me"
+            "I just wanted to follow up and ask if there's anything holding you "
+            "back from moving forward.\n\n"
+            "Is it the pricing, the lead quality, or is there something else on "
+            "your mind?\n\n"
+            "Let me know—I'm happy to answer any questions or clear up any "
+            "concerns.\n\n"
+            "Regards,\nAmanda"
+        ),
+    },
+    {
+        "name": "followup3.html",
+        "subject": "",
+        "description": "Step 3 - after 2 more days",
+        "html_body": (
+            "<p>Hi {{ name }},</p>\n"
+            "<p>Is everything alright?</p>\n"
+            "<p>I noticed I haven't heard back from you in a while, so I just "
+            "wanted to check in.</p>\n"
+            "<p>If this isn't something you need right now, just let me know. "
+            "Even a quick yes or no would be appreciated.</p>\n"
+            "<p>Regards,<br>Amanda</p>"
+        ),
+        "text_body": (
+            "Hi {{ name }},\n\n"
+            "Is everything alright?\n\n"
+            "I noticed I haven't heard back from you in a while, so I just wanted "
+            "to check in.\n\n"
+            "If this isn't something you need right now, just let me know. Even a "
+            "quick yes or no would be appreciated.\n\n"
+            "Regards,\nAmanda"
         ),
     },
 ]
 
 _DEFAULT_SEQUENCE = [
-    {"step_number": 1, "delay_days": 2, "template_name": "followup1.html"},
-    {"step_number": 2, "delay_days": 4, "template_name": "followup2.html"},
+    {"step_number": 1, "delay_days": 0, "template_name": "followup1.html"},
+    {"step_number": 2, "delay_days": 2, "template_name": "followup2.html"},
+    {"step_number": 3, "delay_days": 2, "template_name": "followup3.html"},
 ]
 
 
