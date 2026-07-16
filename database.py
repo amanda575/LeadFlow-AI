@@ -32,6 +32,7 @@ from models import (
 
 _engine: Optional[Engine] = None
 _SessionFactory: Optional[scoped_session] = None
+_plain_sessionmaker: Optional[sessionmaker] = None
 
 
 @event.listens_for(Engine, "connect")
@@ -50,7 +51,7 @@ def _set_sqlite_pragma(dbapi_connection, connection_record):  # noqa: ANN001
 
 def init_engine(cfg: Config = config) -> Engine:
     """Create (once) and return the global engine."""
-    global _engine, _SessionFactory
+    global _engine, _SessionFactory, _plain_sessionmaker
     if _engine is not None:
         return _engine
 
@@ -62,6 +63,14 @@ def init_engine(cfg: Config = config) -> Engine:
     )
     _SessionFactory = scoped_session(
         sessionmaker(bind=_engine, autoflush=False, expire_on_commit=False)
+    )
+    # A plain (non-scoped) factory for session_scope, so each transactional scope
+    # is an INDEPENDENT session. This is essential: helpers like get_setting() and
+    # _step_after() open their own session_scope, and if scopes shared one
+    # thread-local session, an inner scope's commit/close would prematurely end an
+    # outer transaction — silently dropping later writes (e.g. next_followup_at).
+    _plain_sessionmaker = sessionmaker(
+        bind=_engine, autoflush=False, expire_on_commit=False
     )
     return _engine
 
@@ -76,8 +85,16 @@ def get_session() -> Session:
 
 @contextmanager
 def session_scope() -> Iterator[Session]:
-    """Transactional scope: commit on success, rollback on error, always close."""
-    session = get_session()
+    """Transactional scope on an INDEPENDENT session (safe to nest).
+
+    Commit on success, rollback on error, always close. Because each call gets
+    its own session, opening one scope inside another (directly, or via a helper)
+    never disturbs the outer transaction.
+    """
+    if _plain_sessionmaker is None:
+        init_engine()
+    assert _plain_sessionmaker is not None
+    session = _plain_sessionmaker()
     try:
         yield session
         session.commit()
