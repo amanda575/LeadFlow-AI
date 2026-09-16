@@ -56,9 +56,19 @@ class GmailSender:
                 refs.append(email.in_reply_to)
             msg["References"] = " ".join(refs)
 
-        msg.set_content(email.text_body or "")
-        if email.html_body:
-            msg.add_alternative(email.html_body, subtype="html")
+        # Append the operator's Gmail signature (the API won't add it for us).
+        from utils import html_to_text
+
+        signature = gmail_client.get_signature(self._cfg.smtp.from_email)
+        text_body = email.text_body or ""
+        html_body = email.html_body or ""
+        if signature:
+            html_body = f"{html_body}<br><br>{signature}"
+            text_body = f"{text_body}\n\n{html_to_text(signature)}"
+
+        msg.set_content(text_body)
+        if html_body:
+            msg.add_alternative(html_body, subtype="html")
         return msg
 
     # -- sending ----------------------------------------------------------- #

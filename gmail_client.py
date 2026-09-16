@@ -64,6 +64,40 @@ class GmailClient:
         self._cfg = gmail_config
         self._service = None
         self._label_cache: Dict[str, str] = {}
+        self._sig_cache: tuple = (0.0, None)  # (fetched_at, html)
+
+    def get_signature(self, email: Optional[str] = None) -> str:
+        """Return the account's Gmail signature HTML (cached ~1h).
+
+        Lets sent emails carry the operator's real Gmail signature, which the
+        Gmail API does not attach automatically.
+        """
+        import time
+
+        from config import config as _cfg
+
+        email = (email or _cfg.smtp.from_email or "").lower()
+        now = time.time()
+        ts, html = self._sig_cache
+        if html is not None and now - ts < 3600:
+            return html
+        service = self._build_service()
+        if service is None:
+            return html or ""
+        try:
+            resp = service.users().settings().sendAs().list(userId="me").execute()
+            sig = ""
+            for sa in resp.get("sendAs", []):
+                if sa.get("sendAsEmail", "").lower() == email and sa.get("signature"):
+                    sig = sa["signature"]
+                    break
+                if sa.get("isDefault") and sa.get("signature") and not sig:
+                    sig = sa["signature"]
+            self._sig_cache = (now, sig)
+            return sig
+        except Exception as exc:
+            log.debug("Could not fetch Gmail signature: %s", exc)
+            return html or ""
 
     # -- auth -------------------------------------------------------------- #
 
