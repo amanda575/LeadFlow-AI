@@ -2,10 +2,39 @@
 {% block title %}Follow-up Sequence{% endblock %}
 {% block heading %}Follow-up Sequence{% endblock %}
 {% block content %}
+<div class="card mb-4">
+  <div class="card-header">
+    <span class="badge" style="background:#8b5cf6">First Message</span>
+    label — one-off intro message (sent immediately, then stops)
+  </div>
+  <div class="card-body p-0">
+    <table class="table mb-0">
+      <thead><tr><th>Step</th><th>Delay (days)</th><th>Template</th><th>Enabled</th></tr></thead>
+      <tbody>
+        {% for st in first_message_steps %}
+        <tr>
+          <td><strong>{{ st.step_number }}</strong></td>
+          <td>{{ st.delay_days }} <span class="text-secondary small">(immediate)</span></td>
+          <td><span class="code-pill">{{ st.template_name }}</span></td>
+          <td><span class="badge bg-success">On</span></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="card-footer small text-secondary">
+    This is a fixed single-message workflow. To change its wording, edit the
+    <span class="code-pill">firstmessage.html</span> template on the Templates page.
+  </div>
+</div>
+
 <div class="row g-4">
   <div class="col-lg-7">
     <div class="card">
-      <div class="card-header"><i class="bi bi-list-ol"></i> Steps</div>
+      <div class="card-header">
+        <span class="badge" style="background:#0ea5e9">Follow up</span>
+        label — multi-step sequence
+      </div>
       <div class="card-body p-0">
         <table class="table mb-0">
           <thead><tr><th>Step</th><th>Delay (days)</th><th>Template</th><th>Enabled</th><th></th></tr></thead>

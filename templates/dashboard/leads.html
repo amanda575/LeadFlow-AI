@@ -5,12 +5,21 @@
 
 <form class="card card-body mb-3" method="get" action="{{ url_for('leads') }}">
   <div class="row g-2 align-items-end">
-    <div class="col-md-5">
+    <div class="col-md-4">
       <label class="form-label small">Search</label>
       <input type="text" name="q" value="{{ q }}" class="form-control"
-             placeholder="Email, name, company, subject, website, reply text…">
+             placeholder="Email, name, company, subject, website…">
     </div>
-    <div class="col-md-3">
+    <div class="col-md-2">
+      <label class="form-label small">Label</label>
+      <select name="campaign" class="form-select">
+        <option value="">All labels</option>
+        {% for key, label in campaigns %}
+        <option value="{{ key }}" {{ 'selected' if campaign == key else '' }}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-2">
       <label class="form-label small">Status</label>
       <select name="status" class="form-select">
         <option value="">All</option>
@@ -44,7 +53,7 @@
     <table class="table table-hover mb-0">
       <thead>
         <tr>
-          <th>Name</th><th>Email</th><th>Company</th><th>Status</th>
+          <th>Name</th><th>Email</th><th>Label</th><th>Status</th>
           <th>Stage</th><th>Next follow-up</th><th class="text-end">Actions</th>
         </tr>
       </thead>
@@ -53,7 +62,13 @@
         <tr>
           <td><a class="text-decoration-none" href="{{ url_for('lead_detail', lead_id=l.id) }}">{{ l.name or '—' }}</a></td>
           <td class="text-secondary">{{ l.email }}</td>
-          <td>{{ l.company or '—' }}</td>
+          <td>
+            {% if l.campaign == 'first_message' %}
+            <span class="badge" style="background:#8b5cf6">First Message</span>
+            {% else %}
+            <span class="badge" style="background:#0ea5e9">Follow up</span>
+            {% endif %}
+          </td>
           <td><span class="badge badge-status badge-{{ l.status }}">{{ l.status }}</span></td>
           <td>{{ l.current_stage }}</td>
           <td class="small">{{ l.next_followup_at | human }}</td>
@@ -110,10 +125,10 @@
   <nav>
     <ul class="pagination pagination-sm mb-0">
       <li class="page-item {{ 'disabled' if page <= 1 else '' }}">
-        <a class="page-link" href="{{ url_for('leads', page=page-1, q=q, status=status, sort=sort, dir=dir, per_page=per_page) }}">Previous</a>
+        <a class="page-link" href="{{ url_for('leads', page=page-1, q=q, status=status, campaign=campaign, sort=sort, dir=dir, per_page=per_page) }}">Previous</a>
       </li>
       <li class="page-item {{ 'disabled' if page >= pages else '' }}">
-        <a class="page-link" href="{{ url_for('leads', page=page+1, q=q, status=status, sort=sort, dir=dir, per_page=per_page) }}">Next</a>
+        <a class="page-link" href="{{ url_for('leads', page=page+1, q=q, status=status, campaign=campaign, sort=sort, dir=dir, per_page=per_page) }}">Next</a>
       </li>
     </ul>
   </nav>

@@ -189,6 +189,14 @@ def _human_dt(value) -> str:
     return local.strftime("%b %d, %Y · %I:%M %p").replace(" 0", " ") + (f" {abbr}" if abbr else "")
 
 
+_CAMPAIGN_NAMES = {"followup": "Follow up", "first_message": "First Message"}
+
+
+def _campaign_name(value) -> str:
+    """Human label for a campaign id (e.g. 'first_message' -> 'First Message')."""
+    return _CAMPAIGN_NAMES.get(value or "followup", value or "—")
+
+
 def create_app(scheduler_ref=None) -> Flask:
     app = Flask(
         __name__,
@@ -206,6 +214,7 @@ def create_app(scheduler_ref=None) -> Flask:
     )
     csrf.init_app(app)
     app.jinja_env.filters["human"] = _human_dt
+    app.jinja_env.filters["campaign_name"] = _campaign_name
 
     if scheduler_ref is not None:
         health_monitor.bind_scheduler(scheduler_ref)
@@ -323,11 +332,14 @@ def _register_pages(app: Flask, scheduler_ref) -> None:
         per_page = min(100, max(5, request.args.get("per_page", 25, type=int)))
         query_text = (request.args.get("q") or "").strip()
         status_filter = request.args.get("status") or ""
+        campaign_filter = request.args.get("campaign") or ""
         sort = request.args.get("sort", "updated_at")
         direction = request.args.get("dir", "desc")
 
         with session_scope() as s:
             query = s.query(Lead)
+            if campaign_filter:
+                query = query.filter(Lead.campaign == campaign_filter)
             if query_text:
                 like = f"%{query_text}%"
                 query = query.filter(
@@ -372,9 +384,11 @@ def _register_pages(app: Flask, scheduler_ref) -> None:
             total=total,
             q=query_text,
             status=status_filter,
+            campaign=campaign_filter,
             sort=sort,
             dir=direction,
             statuses=[s.value for s in LeadStatus],
+            campaigns=[("followup", "Follow up"), ("first_message", "First Message")],
             active="leads",
         )
 
@@ -433,7 +447,18 @@ def _register_pages(app: Flask, scheduler_ref) -> None:
             )
             data = [st.to_dict() for st in steps]
             names = [t.name for t in s.query(Template).order_by(Template.name).all()]
-        return render_template("sequence.html", steps=data, template_names=names, active="sequence")
+        # The First Message campaign is code-defined (one immediate message).
+        from services import _FIRST_MESSAGE_STEPS
+
+        first_message_steps = [
+            {"step_number": st.step_number, "delay_days": st.delay_days,
+             "template_name": st.template_name, "enabled": st.enabled}
+            for st in _FIRST_MESSAGE_STEPS
+        ]
+        return render_template(
+            "sequence.html", steps=data, template_names=names,
+            first_message_steps=first_message_steps, active="sequence",
+        )
 
     @app.route("/settings")
     @login_required

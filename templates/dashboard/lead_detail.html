@@ -16,6 +16,14 @@
           <dt class="col-sm-4">Website</dt>
           <dd class="col-sm-8">{% if lead.website %}<a href="{{ lead.website }}" target="_blank">{{ lead.website }}</a>{% else %}—{% endif %}</dd>
           <dt class="col-sm-4">Subject</dt><dd class="col-sm-8">{{ lead.subject or '—' }}</dd>
+          <dt class="col-sm-4">Label</dt>
+          <dd class="col-sm-8">
+            {% if lead.campaign == 'first_message' %}
+            <span class="badge" style="background:#8b5cf6">First Message</span>
+            {% else %}
+            <span class="badge" style="background:#0ea5e9">Follow up</span>
+            {% endif %}
+          </dd>
           <dt class="col-sm-4">Stage</dt><dd class="col-sm-8">{{ lead.current_stage }}</dd>
           <dt class="col-sm-4">Added</dt><dd class="col-sm-8">{{ lead.date_added | human }}</dd>
           <dt class="col-sm-4">Next follow-up</dt><dd class="col-sm-8">{{ lead.next_followup_at | human }}</dd>
