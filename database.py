@@ -217,6 +217,103 @@ _DEFAULT_TEMPLATES = [
             "Regards,\nAmanda"
         ),
     },
+    {
+        "name": "firstmessage.html",
+        "subject": "",
+        "description": "One-off first message (First Message label)",
+        "html_body": (
+            "<p>Hi {{ name }},</p>\n"
+            "<p>Thank you so much for your time.</p>\n"
+            "<p>Let me break this down simply so you can see exactly how we work "
+            "and what you're getting.</p>\n"
+            "<p><strong>How Our Leads Work</strong></p>\n"
+            "<p>We generate exclusive, real-time leads from business owners who are "
+            "actively looking for SEO or web design services.</p>\n"
+            "<p>No recycled lists.<br>No shared data.<br>No low-quality scraped "
+            "contacts.</p>\n"
+            "<p><strong>Pricing</strong></p>\n"
+            "<p><strong>Exclusive Leads — $15 per lead</strong><br>Inbound or "
+            "engaged prospects who have shown genuine interest.</p>\n"
+            "<p><strong>Appointment-Ready Leads — $25 per lead</strong><br>Warmer "
+            "prospects who have already requested a callback or proposal, and we've "
+            "confirmed their intent.</p>\n"
+            "<p><strong>Every Lead Includes</strong></p>\n"
+            "<ul><li>U.S.-based businesses</li><li>Manually screened (not scraped)"
+            "</li><li>Filtered by service need and urgency</li><li>Delivered in real "
+            "time as they come in</li><li>100% exclusive to your business</li></ul>\n"
+            "<p><strong>Test Pack — $399</strong><br>A great way to start without "
+            "overcommitting.</p>\n"
+            "<p>Includes:</p>\n"
+            "<ul><li>10 Appointment-Ready Leads</li><li>12 High-Intent Exclusive "
+            "Leads</li><li>100% Exclusive</li><li>Free replacements if anything is "
+            "off</li><li>Delivery over approximately 10–15 days</li></ul>\n"
+            "<p><strong>What You'll Receive</strong></p>\n"
+            "<p>Every lead includes:</p>\n"
+            "<ul><li>Contact Name</li><li>Company Name</li><li>Phone Number</li>"
+            "<li>Email Address</li><li>Website</li><li>Services they're looking for"
+            "</li><li>Context (e.g. \"Requested proposal\", \"Needs callback ASAP\")"
+            "</li></ul>\n"
+            "<p><strong>Industries We Currently Serve</strong></p>\n"
+            "<ul><li>Home Services</li><li>Real Estate</li><li>Legal</li><li>Health "
+            "&amp; Wellness</li><li>Trades</li><li>Events</li></ul>\n"
+            "<p>We can also dial into specific niches based on your requirements.</p>\n"
+            "<p><strong>Scaling</strong></p>\n"
+            "<p>Once we identify what converts best for you, scaling to 40+ "
+            "exclusive leads per week is straightforward.</p>\n"
+            "<p><strong>Recent Improvements</strong></p>\n"
+            "<p>We've waived the setup fee.</p>\n"
+            "<p>We're also leveraging a newly expanded data source, allowing us to "
+            "consistently deliver higher-quality and more reliable leads.</p>\n"
+            "<p>If everything looks good, I can have the invoice sent over and "
+            "prepare your first delivery.</p>\n"
+            "<p>Looking forward to working with you!</p>\n"
+            "<p>Regards,<br>Amanda</p>"
+        ),
+        "text_body": (
+            "Hi {{ name }},\n\n"
+            "Thank you so much for your time.\n\n"
+            "Let me break this down simply so you can see exactly how we work and "
+            "what you're getting.\n\n"
+            "How Our Leads Work\n"
+            "We generate exclusive, real-time leads from business owners who are "
+            "actively looking for SEO or web design services.\n"
+            "No recycled lists.\nNo shared data.\nNo low-quality scraped contacts.\n\n"
+            "Pricing\n"
+            "Exclusive Leads — $15 per lead: Inbound or engaged prospects who have "
+            "shown genuine interest.\n"
+            "Appointment-Ready Leads — $25 per lead: Warmer prospects who have "
+            "already requested a callback or proposal, and we've confirmed their "
+            "intent.\n\n"
+            "Every Lead Includes\n"
+            "- U.S.-based businesses\n- Manually screened (not scraped)\n"
+            "- Filtered by service need and urgency\n"
+            "- Delivered in real time as they come in\n"
+            "- 100% exclusive to your business\n\n"
+            "Test Pack — $399: A great way to start without overcommitting.\n"
+            "Includes:\n- 10 Appointment-Ready Leads\n- 12 High-Intent Exclusive "
+            "Leads\n- 100% Exclusive\n- Free replacements if anything is off\n"
+            "- Delivery over approximately 10–15 days\n\n"
+            "What You'll Receive — every lead includes:\n"
+            "- Contact Name\n- Company Name\n- Phone Number\n- Email Address\n"
+            "- Website\n- Services they're looking for\n"
+            "- Context (e.g. \"Requested proposal\", \"Needs callback ASAP\")\n\n"
+            "Industries We Currently Serve\n"
+            "- Home Services\n- Real Estate\n- Legal\n- Health & Wellness\n- Trades\n"
+            "- Events\n"
+            "We can also dial into specific niches based on your requirements.\n\n"
+            "Scaling\n"
+            "Once we identify what converts best for you, scaling to 40+ exclusive "
+            "leads per week is straightforward.\n\n"
+            "Recent Improvements\n"
+            "We've waived the setup fee.\n"
+            "We're also leveraging a newly expanded data source, allowing us to "
+            "consistently deliver higher-quality and more reliable leads.\n\n"
+            "If everything looks good, I can have the invoice sent over and prepare "
+            "your first delivery.\n\n"
+            "Looking forward to working with you!\n\n"
+            "Regards,\nAmanda"
+        ),
+    },
 ]
 
 _DEFAULT_SEQUENCE = [
@@ -250,6 +347,24 @@ def seed_defaults() -> None:
                 session.add(FollowUpSequence(enabled=True, **step))
 
 
+def _run_lightweight_migrations() -> None:
+    """Apply additive schema tweaks that create_all can't (new columns on an
+    existing SQLite table). Safe to run repeatedly."""
+    from sqlalchemy import text
+
+    assert _engine is not None
+    with _engine.begin() as conn:
+        cols = {
+            row[1]
+            for row in conn.execute(text("PRAGMA table_info(leads)")).fetchall()
+        }
+        if "campaign" not in cols:
+            conn.execute(
+                text("ALTER TABLE leads ADD COLUMN campaign VARCHAR(32) "
+                     "DEFAULT 'followup'")
+            )
+
+
 def init_db(cfg: Config = config) -> None:
     """Create tables, wire logging sink and seed defaults. Safe to call twice."""
     init_engine(cfg)
@@ -257,6 +372,7 @@ def init_db(cfg: Config = config) -> None:
     logging_manager.set_db_sink(_db_log_sink)
     assert _engine is not None
     Base.metadata.create_all(_engine)
+    _run_lightweight_migrations()
     seed_defaults()
 
 

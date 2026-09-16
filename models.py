@@ -75,6 +75,9 @@ class Lead(Base):
 
     # Scheduling / lifecycle.
     date_added: Mapped[datetime] = mapped_column(DateTime, default=utcnow)
+    # Which watched label / workflow this lead belongs to:
+    # "followup" (multi-step sequence) or "first_message" (one-off message).
+    campaign: Mapped[str] = mapped_column(String(32), default="followup", index=True)
     current_stage: Mapped[int] = mapped_column(Integer, default=0)
     status: Mapped[LeadStatus] = mapped_column(
         Enum(LeadStatus), default=LeadStatus.PENDING, index=True
@@ -121,6 +124,7 @@ class Lead(Base):
             "company": self.company,
             "website": self.website,
             "status": self.status.value if self.status else None,
+            "campaign": self.campaign,
             "current_stage": self.current_stage,
             "date_added": self.date_added.isoformat() if self.date_added else None,
             "next_followup_at": (

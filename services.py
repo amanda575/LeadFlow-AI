@@ -18,6 +18,7 @@ configured timezone.
 
 from __future__ import annotations
 
+from collections import namedtuple
 from datetime import datetime, timedelta
 from typing import List, Optional
 
@@ -51,6 +52,17 @@ from utils import (
 
 log = get_logger("import")
 send_log = get_logger("smtp")
+
+# Campaign identifiers.
+CAMPAIGN_FOLLOWUP = "followup"
+CAMPAIGN_FIRST_MESSAGE = "first_message"
+
+# A minimal stand-in for a FollowUpSequence row (same duck-typed attributes),
+# used for the code-defined "first message" campaign so it needs no DB rows.
+_SeqStep = namedtuple("_SeqStep", ["step_number", "delay_days", "template_name", "enabled"])
+
+# The "first message" campaign is a single immediate message, then done.
+_FIRST_MESSAGE_STEPS = [_SeqStep(1, 0, "firstmessage.html", True)]
 
 
 def _business_hours() -> BusinessHoursConfig:
@@ -90,23 +102,31 @@ class LeadService:
     # ------------------------------------------------------------------ #
 
     def import_leads(self) -> int:
-        """Import new labelled threads as leads. Returns count of new leads."""
-        thread_ids = gmail_client.list_label_threads()
-        if not thread_ids:
-            return 0
+        """Import new labelled threads as leads from every watched label.
+
+        The follow-up label runs the multi-step sequence; the first-message label
+        sends a single message. Returns the count of new leads created.
+        """
+        watched = [
+            (config.gmail.label, CAMPAIGN_FOLLOWUP),
+            (config.gmail.first_message_label, CAMPAIGN_FIRST_MESSAGE),
+        ]
 
         created = 0
-        for thread_id in thread_ids:
-            try:
-                if self._lead_exists(thread_id):
-                    continue
-                thread = gmail_client.get_thread(thread_id)
-                if thread is None or thread.first is None:
-                    continue
-                if self._create_lead_from_thread(thread):
-                    created += 1
-            except Exception as exc:  # never let one bad thread stop the batch
-                log.error("Failed importing thread %s: %s", thread_id, exc)
+        for label_name, campaign in watched:
+            if not label_name:
+                continue
+            for thread_id in gmail_client.list_label_threads(label_name):
+                try:
+                    if self._lead_exists(thread_id):
+                        continue
+                    thread = gmail_client.get_thread(thread_id)
+                    if thread is None or thread.first is None:
+                        continue
+                    if self._create_lead_from_thread(thread, campaign):
+                        created += 1
+                except Exception as exc:  # never let one bad thread stop the batch
+                    log.error("Failed importing thread %s: %s", thread_id, exc)
 
         if created:
             log.info("Imported %d new lead(s)", created)
@@ -137,7 +157,9 @@ class LeadService:
             if a
         }
 
-    def _create_lead_from_thread(self, thread: GmailThread) -> bool:
+    def _create_lead_from_thread(
+        self, thread: GmailThread, campaign: str = CAMPAIGN_FOLLOWUP
+    ) -> bool:
         """Create a Lead from the outreach thread. Returns True if created."""
         first = thread.first
         last = thread.last
@@ -160,7 +182,7 @@ class LeadService:
         # Start the follow-up clock from import time (now), so labelling an older
         # email doesn't fire a follow-up immediately.
         base_dt = datetime.utcnow()
-        step = self._first_enabled_step()
+        step = self._first_enabled_step(campaign)
         next_at: Optional[datetime] = None
         if step is not None:
             target = base_dt + timedelta(days=step.delay_days)
@@ -177,6 +199,7 @@ class LeadService:
                 name=prospect_name or first_name(prospect_email),
                 company=company,
                 website=website,
+                campaign=campaign,
                 current_stage=0,
                 status=LeadStatus.PENDING,
                 next_followup_at=next_at,
@@ -187,11 +210,11 @@ class LeadService:
                 ActivityHistory(
                     lead_id=lead.id,
                     action="imported",
-                    detail=f"Imported from Gmail label; next follow-up {next_at}",
+                    detail=f"Imported into '{campaign}'; next message {next_at}",
                 )
             )
 
-        log.info("Created lead %s (%s)", prospect_email, thread.id)
+        log.info("Created %s lead %s (%s)", campaign, prospect_email, thread.id)
         return True
 
     @staticmethod
@@ -222,7 +245,10 @@ class LeadService:
         return None
 
     @staticmethod
-    def _first_enabled_step() -> Optional[FollowUpSequence]:
+    def _first_enabled_step(campaign: str = CAMPAIGN_FOLLOWUP):
+        """First step of a campaign's sequence (or None)."""
+        if campaign == CAMPAIGN_FIRST_MESSAGE:
+            return _FIRST_MESSAGE_STEPS[0] if _FIRST_MESSAGE_STEPS else None
         with session_scope() as session:
             return (
                 session.query(FollowUpSequence)
@@ -232,8 +258,13 @@ class LeadService:
             )
 
     @staticmethod
-    def _step_after(stage: int) -> Optional[FollowUpSequence]:
-        """Return the next enabled step strictly greater than *stage*."""
+    def _step_after(campaign: str, stage: int):
+        """Return a campaign's next enabled step strictly greater than *stage*."""
+        if campaign == CAMPAIGN_FIRST_MESSAGE:
+            for st in _FIRST_MESSAGE_STEPS:
+                if st.enabled and st.step_number > stage:
+                    return st
+            return None
         with session_scope() as session:
             return (
                 session.query(FollowUpSequence)
@@ -348,7 +379,8 @@ class LeadService:
             ):
                 return False
 
-            step = self._step_after(lead.current_stage)
+            campaign = lead.campaign or CAMPAIGN_FOLLOWUP
+            step = self._step_after(campaign, lead.current_stage)
             if step is None:
                 lead.status = LeadStatus.COMPLETED
                 lead.next_followup_at = None
@@ -383,7 +415,7 @@ class LeadService:
                     refs = (lead.references or "")
                     lead.references = (refs + " " + result.message_id).strip()
                     lead.rfc_message_id = result.message_id
-                nxt = self._step_after(stage_being_sent)
+                nxt = self._step_after(campaign, stage_being_sent)
                 if nxt is None:
                     lead.status = LeadStatus.COMPLETED
                     lead.next_followup_at = None

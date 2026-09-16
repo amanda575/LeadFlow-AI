@@ -76,6 +76,8 @@ class GmailConfig:
     credentials_file: Path
     token_file: Path
     label: str
+    # Second watched label: sends the one-off "first message" and then stops.
+    first_message_label: str
     auto_remove_label: bool
     # When False (e.g. on a headless server), never open a browser for OAuth;
     # rely on a pre-supplied token.json that auto-refreshes instead.
@@ -221,6 +223,7 @@ def load_config() -> Config:
         ),
         token_file=_resolve_data_path("GMAIL_TOKEN_FILE", "credentials/token.json"),
         label=_get_str("GMAIL_LABEL", "Follow Up"),
+        first_message_label=_get_str("GMAIL_FIRST_MESSAGE_LABEL", "First Message"),
         auto_remove_label=_get_bool("GMAIL_AUTO_REMOVE_LABEL", False),
         allow_interactive_auth=_get_bool("GMAIL_ALLOW_INTERACTIVE_AUTH", True),
     )
